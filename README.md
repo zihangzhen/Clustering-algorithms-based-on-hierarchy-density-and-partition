@@ -26,3 +26,7 @@ At the same time, it has also achieved the selection of initial values for kmean
 >- ELBOW:
 >
 >    使用肘方法优化KMeans和的MiniBatchKMeans簇数选择, args需要k值的起、始值,步进值和消除抖动的幅值，使用MiniBatchKMean时还需要random_state和batch_size
+>  
+>- Silhouette：
+>
+>-   使用轮廓系数遍历选取最优的KMeans和的MiniBatchKMeans簇数
