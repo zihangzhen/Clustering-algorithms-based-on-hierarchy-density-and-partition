@@ -29,4 +29,4 @@ At the same time, it has also achieved the selection of initial values for kmean
 >  
 >- Silhouette：
 >
->-   使用轮廓系数遍历选取最优的KMeans和的MiniBatchKMeans簇数
+>   使用轮廓系数遍历选取最优的KMeans和的MiniBatchKMeans簇数
