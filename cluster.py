@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: UTF-8 -*-
 # @Author   ：Zane
-# @Mail     : zanezii@foxmail.com
+# @Mail     : zaneii@foxmail.com
 # @Date     ：2023/6/22 21:23 
 # @File     ：cluster.py
 # @Description :
@@ -67,7 +67,7 @@ class cluster:
             MiniBatchKMeans:
                 基于划分的方法，优化KMeans计算过程，可分批训练，适用于凸图像，效果不如KMeans，
                 args需要n_clusters,random_state和batch_size
-            EBOW:
+            ELBOW:
                 使用肘方法优化KMeans和的MiniBatchKMeans簇数选择，
                 args需要k值的起、始值,步进值和消除抖动的幅值，使用MiniBatchKMean时还需要random_state和batch_size
         :param X: 数据集，默认使用测试数据集
@@ -115,9 +115,9 @@ class cluster:
                     print("[ERROR] MiniBatchKMeans need input parameters of n_clusters, random_state and batch_size!")
                     sys.exit()
                 model = self._mini_batch_kmeans(X, None, *args)
-            elif method == 'EBOW' or method== 'EBOW_mini':
+            elif method == 'ELBOW' or method== 'ELBOW_mini':
                 if len(args) < 3:
-                    print("[ERROR] EBOW need input parameters of idnex of 'start' 'end', and maybe 'step' 'amplitude' and more!")
+                    print("[ERROR] ELBOW need input parameters of idnex of 'start' 'end', and maybe 'step' 'amplitude' and more!")
                     sys.exit()
                 if args[0] == 'KMeans':
                     if len(args) < 5:
@@ -126,7 +126,7 @@ class cluster:
                     else:
                         step = args[3]
                         amplitude = args[4]
-                    model = self._ebow_kmeans(X=X, start=args[1], end=args[2], step=step, amplitude=amplitude)
+                    model = self._elbow_kmeans(X=X, start=args[1], end=args[2], step=step, amplitude=amplitude)
                 else:
                     if len(args) < 5:
                         step = 1
@@ -136,8 +136,8 @@ class cluster:
                         step = args[3]
                         amplitude = args[4]
                         subargs = args[5:]
-                    model = self._ebow_kmeans(X, args[1], args[2], step, amplitude, *subargs)
-            elif method == 'Silhouette' or method== 'Silhouette_mini':
+                    model = self._elbow_kmeans(X, args[1], args[2], step, amplitude, *subargs)
+            elif method == 'Silhouette' or method == 'Silhouette_mini':
                 if len(args) < 2:
                     print("[ERROR] Silhouette need input parameters of idnex of 'start' 'end', and more!")
                     sys.exit()
@@ -177,7 +177,7 @@ class cluster:
             model = model.partial_fit(X_sub)
         return model
 
-    def _ebow_kmeans(self, X, start, end, step=1, amplitude=1.0, *args):
+    def _elbow_kmeans(self, X, start, end, step=1, amplitude=1.0, *args):
         is_minibatch = True if len(args) != 0 else False
 
         SSE = []
@@ -200,7 +200,7 @@ class cluster:
             models.put(kmeans_model)
             # print('{} Means SSE loss = {}'.format(index, kmeans_model.inertia_))
 
-            # 快速ebow,通过三阶最大值判断是否完成
+            # 快速elbow,通过三阶最大值判断是否完成
             if index >= 2:
                 # 当SSE计算到第[index]个时，计算第[index-2]个二阶SSE
                 SSE2.append(SSE[index] + SSE[index - 2] - 2 * SSE[index - 1])
@@ -214,7 +214,7 @@ class cluster:
                 if SSE2[index - 3] - SSE2[index - 2] > 0 and right / left < amplitude:
                     # 判断三阶右侧是否发生了转折，同时需要左右幅值变化够大以消除抖动
                     model = models.get()  # 返回第[index-2]个k的模型
-                    print("[WARNING] The number of clusters selected by EBOW is", k - 2 * step)
+                    print("[WARNING] The number of clusters selected by ELBOW is", k - 2 * step)
                     index += 1
                     break
             index += 1
@@ -224,7 +224,7 @@ class cluster:
         serialization(X, f'{self.path}_{is_minibatch}_x.pickle')
         serialization(SSE, f'{self.path}_{is_minibatch}_SSE.pickle')
         serialization(SSE2, f'{self.path}_{is_minibatch}_SSE2.pickle')
-        self._plot_ebow_process_chart(x, SSE, SSE2)
+        self._plot_elbow_process_chart(x, SSE, SSE2)
         return model
 
     def _silhouette_kmeans(self, X, X_search=None, *args):
@@ -295,7 +295,7 @@ class cluster:
             print(datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             pass
 
-    def _plot_ebow_process_chart(self, x, SSE, SSE2):
+    def _plot_elbow_process_chart(self, x, SSE, SSE2):
         fig, (ax1, ax2) = plt.subplots(2, 1)
         # 折线图观察最佳的k值
         ax1.plot(x, SSE, 'bx-')
@@ -359,7 +359,7 @@ if __name__ == '__main__':
     # y_pred2, _ = c.clustering('single', method='Agglomerative')
     # y_pred3, _ = c.clustering(4, 0, 90, method='MiniBatchKMeans')
     # y_pred6, _ = c.clustering(4, method='KMeans')
-    c.clustering('KMeans', 2, 10, 1, 0.35, method='EBOW')
-    c.clustering('MiniBatchKMeans', 2, 10, 1, 0.35, 0, 90, method='EBOW')
+    c.clustering('KMeans', 2, 10, 1, 0.35, method='ELBOW')
+    c.clustering('MiniBatchKMeans', 2, 10, 1, 0.35, 0, 90, method='ELBOW')
     c.clustering(2, 10, 1, method='Silhouette')
     c.clustering(2, 10, 1, 0, 90, method='Silhouette')
